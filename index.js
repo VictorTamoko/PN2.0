@@ -13,17 +13,28 @@ var message
 //Définition des types
 class Utilisateur
 {
-    construtor(nom) 
+    constructor(nom) 
     {
         //Propriétés
         this.Nom = nom                      //Nom du joueur
         this.LamesMa = new Set()            //Pioche des lames majeures
-        this.DefausseMa = LamesMajeures     //Défausse des lames majeures
-        this.LamesMi = new Set()            //Pioche des lames mineures
-        this.DefausseMi = LamesMineures     //Défausse des lames mineures
+        this.DefausseMa = new Set()            //Défausse des lames majeures
+        this.LamesMi = new Set()           //Pioche des lames mineures
+        this.DefausseMi = new Set()            //Défausse des lames mineures
     //A la création, les défausses sont initialisées avec les cartes et les pioches sont vides pour que dès le premier tirage il y ait un brassage de cartes
     }
     //Méthodes
+    SetDefausses = function()
+    {
+        var that=this
+        LamesMajeures.forEach(function(carte){
+            that.DefausseMa.add(carte) 
+        })
+        LamesMineures.forEach(function(carte){
+            that.DefausseMi.add(carte)
+        })
+    }
+
     MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
     {
         //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
@@ -92,31 +103,28 @@ function Init() //Permet de réinitialiser le bot
     Utilisateurs.clear() //Efface la liste des utilisateurs
     message=''
     bot.users.cache.each(user => {
-        console.log( 'Init user :' + user + ' username : '  + user.username + ' IsBot : ' + user.bot)
-        if (!user.bot){
-            console.log('Utilisateur.size : ' +Utilisateurs.size)
-            Utilisateurs.add(new Utilisateur(user.username))
+        if (!user.bot){//Crée un utilisateur par user du salon qui n'est pas un bot
+            NouvelUtilisateur = new Utilisateur(user.username)
+            NouvelUtilisateur.SetDefausses()
+            NouvelUtilisateur.MelangerMa() 
+            NouvelUtilisateur.MelangerMi()
+            Utilisateurs.add(NouvelUtilisateur)
         }
-    }) //Crée un utilisateur par user du salon qui n'est pas un bot
-    Utilisateurs.forEach(function(user){ //pour chaque utilisateur créé, on fait un premier battage des cartes
-        user.DefausseMa = LamesMajeures
-        user.MelangerMa() 
-        user.DefausseMi = LamesMineures
-        user.MelangerMi()} )
+    }) 
 }
 function Sauvegarder() //Permet de sauvegarder le contexte
 {
     message=""
     //pour chaque utilisateur on va sauvegarder l'état des 4 collections de cartes
-    Utilisateurs.forEach(function(element)
+    Utilisateurs.forEach(function(utilisateur)
     {
-        bot.context[this.Nom]=
+        bot.context[utilisateur.Nom]=
         {
-            Nom: this.Nom,
-            LamesMa: Array.from(this.LamesMa), //Afin de les sauvegarde au format JSON, il faut les transformer en tableau
-            DefausseMa: Array.from(this.DefausseMa),
-            LamesMi: Array.from(this.LamesMi),
-            DefausseMi: Array.from(this.DefausseMi)
+            Nom: utilisateur.Nom,
+            LamesMa: Array.from(utilisateur.LamesMa), //Afin de les sauvegarde au format JSON, il faut les transformer en tableau
+            DefausseMa: Array.from(utilisateur.DefausseMa),
+            LamesMi: Array.from(utilisateur.LamesMi),
+            DefausseMi: Array.from(utilisateur.DefausseMi)
         }
         //écriture du fichier JSON
         fs.writeFile("./context.json",JSON.stringify(bot.context,null,4), err =>
@@ -126,22 +134,16 @@ function Sauvegarder() //Permet de sauvegarder le contexte
     })
 }
 function Charger() {//Permet de charger le contexte précédement sauvegardé
-        var file = JSON.parse(fs.readFileSync("./context.json", "utf8"))
-        file.forEach(function(element){
-            var Nom = this.Nom
-            var LamesMa = this.LamesMa
-            var DefausseMa = this.DefausseMa
-            var LamesMi = this.LamesMi
-            var DefausseMi = this.DefausseMi
-            Utilisateurs.forEach(function(element){
-                if(this.Nom === Nom){
-                    this.LamesMa = LamesMa
-                    this.DefausseMa = DefausseMa
-                    this.LamesMi = LamesMi
-                    this.DefausseMi = DefausseMi
-                }
-            })
-        })
+        var JSONfile = JSON.parse(fs.readFileSync("./context.json", "utf8"))
+        Utilisateurs.forEach(function(utilisateur){
+            var utilisateurJSON = JSONfile[utilisateur.Nom]
+            if( utilisateurJSON){
+                utilisateur.LamesMa =  new Set(utilisateurJSON.LamesMa)
+                utilisateur.DefausseMa = new Set(utilisateurJSON.DefausseMa)
+                utilisateur.LamesMi = new Set(utilisateurJSON.LamesMi)
+                utilisateur.DefausseMi = new Set(utilisateurJSON.DefausseMi)
+            }
+         })
     }
 //Initialisation du bot
 bot.login(Config.token)
@@ -150,27 +152,27 @@ bot.on('ready', () =>
     //s'exécute lorsque le bot est démarré sur le serveur
     Init()
     console.log('I am ready!')
-    bot.user.setActivity('--help')
+    bot.user.setActivity(Config.Prefix + 'help')
 })
 
 
 //détection des commandes dans les messages du serveur
 bot.on('message', function (msg)
 {
-    if(msg.content.startsWith('--') && !msg.author.bot)
+    if(msg.content.startsWith(Config.Prefix) && !msg.author.bot)
     {
         msg.content = msg.content.toLowerCase()
         switch (msg.content)
         {
             //Demande d'une lame majeure
-            case '--ma':
+            case Config.Prefix + 'ma':
                 console.log(msg.author.username + ' pioche une lame majeure')
-                Utilisateurs.forEach(function(element) //parse la collection des utilisateur
+                Utilisateurs.forEach(function(utilisateur) //parse la collection des utilisateur
                 {
-                    if(this.Nom === msg.author.username)// détecte le joueur qui a envoyé la commande
+                    if(utilisateur.Nom === msg.author.username)// détecte le joueur qui a envoyé la commande
                     {
-                        var lame = this.PiocherMa() //tire une carte dans la collection du joueur
-                        message = msg.author.username +' a pioché la lame majeure suivante : ' + lame
+                        var lame = utilisateur.PiocherMa() //tire une carte dans la collection du joueur
+                        message = '***' + msg.author.username +'*** a pioché la lame majeure suivante : **' + lame+'**'
                         console.log(message)
                         msg.channel.send(message)
                     }
@@ -179,14 +181,14 @@ bot.on('message', function (msg)
 
 
             //Demande d'une lame mineure, fonctionne pareil que pour les lames mineures
-            case '--mi':
+            case Config.Prefix + 'mi':
                 console.log(msg.author.username + ' pioche une lame mineure')
-                Utilisateurs.forEach(function(element)
+                Utilisateurs.forEach(function(utilisateur)
                 {
-                    if(this.Nom === msg.author.username)
+                    if(utilisateur.Nom === msg.author.username)
                     {
-                        var lame = this.PiocherMi()
-                        message = msg.author.username +' a pioché la lame mineure suivante : ' + lame
+                        var lame = utilisateur.PiocherMi()
+                        message = '***' + msg.author.username +'*** a pioché la lame mineure suivante : **' + lame+'**'
                         console.log(message)
                         msg.channel.send(message)
                     }
@@ -195,23 +197,23 @@ bot.on('message', function (msg)
 
 
             //Liste des utilisateurs
-            case '--users':
+            case Config.Prefix + 'users':
                 console.log(msg.author.username + ' demande de liste des utilisateurs référencés')
                 message = ''
-                Utilisateurs.forEach(function(element){ message = message + this.Nom + ' '} )
+                Utilisateurs.forEach(function(utilisateur){ message = message + utilisateur.Nom + '\n'} )
                 msg.channel.send(message)
                 break
 
 
             //réinitialisation de la partie
-            case '--init':
+            case Config.Prefix + 'init':
                 console.log(msg.author.username + ' réinitilaise le bot')
                 msg.channel.send('On remet tout à zéro et on recommence ? OK ! ')
                 Init()
                 break
 
             //Sauvegarde du contexte
-            case '--save':            case '--sauve':
+            case Config.Prefix + 'save':            case Config.Prefix + 'sauve':
                 console.log(msg.author.username + ' sauvegarde le contexte')
                 Sauvegarder()
                 msg.channel.send("sauvegarde effectuée")
@@ -219,44 +221,45 @@ bot.on('message', function (msg)
             
 
             //Récupération du contexte
-            case '--load':
-                //msg.channel.send('Il faut coder cette fonction espèce de feignasse')
+            case Config.Prefix + 'load':
+                console.log(msg.author.username + ' recharge le contexte')
                 Charger()
+                msg.channel.send("Vous vous souvenez des cartes déjà tirées ? Non ? bah moi oui ! \nC'est bon vous pouvez reprendre :) ")
                 break
 
             
             //Affichage de l'aide
-            case '--help':
+            case Config.Prefix + 'help':    case Config.Prefix + '?' :
                 console.log(msg.author.username + ' demande de l\'aide')
-                message = '--r : permet de faire un jet de dé(s), la commande est sous la forme --r3d10[f7] avec : \n'
+                message = Config.Prefix + 'r : permet de faire un jet de dé(s), la commande est sous la forme --r3d10[f7] avec : \n'
                 message = message + '          - 3 = nombre de dés à lancer\n'
                 message = message + '          - 10 = nombre de face dés dés lancés\n'
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
-                message = message + '--ma : permet de piocher une lame majeure \n'
-                message = message + '--mi : permet de piocher une lame mineure\n'
+                message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
+                message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
                 msg.channel.send(message)
                 break
-            case '--helpmj':
-                message = '--r : permet de faire un jet de dé(s), la commande est sous la forme --r3d10[f7] avec : \n'
+            case Config.Prefix + 'helpmj':
+                message = Config.Prefix + ' : permet de faire un jet de dé(s), la commande est sous la forme '+ Config.Prefix +'3d10[f7] avec : \n'
                 message = message + '          - 3 = nombre de dés à lancer\n'
                 message = message + '          - 10 = nombre de face dés dés lancés\n'
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
-                message = message + '--ma : permet de piocher une lame majeure \n'
-                message = message + '--mi : permet de piocher une lame mineure\n'
-                message = message + '--users : permet d\'afficher les utilisateurs\n'
-                message = message + '--init : permet de réinitialiser le bot\n'
-                message = message + '--save : permet de sauvegarder le contexte dans le fichier ./context.JSON\n'
-                message = message + '--load : permet de récupéré le contexte depuis le fichier ./context.JSON\n'
+                message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
+                message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
+                message = message + Config.Prefix + 'users : permet d\'afficher les utilisateurs\n'
+                message = message + Config.Prefix + 'init : permet de réinitialiser le bot\n'
+                message = message + Config.Prefix + 'save : permet de sauvegarder le contexte dans le fichier ./context.JSON\n'
+                message = message + Config.Prefix + 'load : permet de récupéré le contexte depuis le fichier ./context.JSON\n'
                 msg.channel.send(message)
                 break
             
             default: 
 
             //Détection d'une commande de jet de dés --r
-            if (msg.content.startsWith('--r') && msg.content.includes('d') ) //format de la commande : --rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
+            if (msg.content.startsWith(Config.Prefix + '') && msg.content.includes('d') ) //format de la commande : --rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
             {
                 console.log(msg.author + ' lance les dés : ' + msg.content)
-                var commande = msg.content.slice(3).trim()
+                var commande = msg.content.slice(Config.Prefix.length).trim()
                 var resultats =[]
                 var index =0
                 var NbJets =0
@@ -301,18 +304,18 @@ bot.on('message', function (msg)
                         if(resultatDe<10){EchecCritique=false}
                         if(EchecCritique)
                         {
-                            message = msg.author.username + ' a réalisé un ECHEC CRITIQUE ! ! ! ! ! ! \n'
+                            message = '***' + msg.author.username + '*** a réalisé un __**ECHEC CRITIQUE**__ **! ! ! ! ! !** \n'
                             message = message + '[ ' + resultats + ' ]'
                         }
                         else
                         {
-                            message = msg.author.username + ' a réalisé ' + succes + ' succès \n'
+                            message = '***' + msg.author.username + '*** a réalisé **' + succes + '** succès \n'
                             message = message + '[ ' + resultats + ' ] D =<' + Facilite
                         }
                     }
                     else
                     {
-                        message = msg.author.username + ' a obtenu : [ ' + resultats +']'
+                        message = '***' + msg.author.username + '*** a obtenu : [ **' + resultats +'** ]'
                     }
                 }
                 
