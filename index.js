@@ -98,11 +98,11 @@ function Init() //Permet de réinitialiser le bot
             Utilisateurs.add(new Utilisateur(user.username))
         }
     }) //Crée un utilisateur par user du salon qui n'est pas un bot
-    Utilisateurs.forEach(function(element){ //pour chaque utilisateur créé, on fait un premier battage des cartes
-        this.DefausseMa = LamesMajeures
-        this.MelangerMa() 
-        this.DefausseMi = LamesMineures
-        this.MelangerMi()} )
+    Utilisateurs.forEach(function(user){ //pour chaque utilisateur créé, on fait un premier battage des cartes
+        user.DefausseMa = LamesMajeures
+        user.MelangerMa() 
+        user.DefausseMi = LamesMineures
+        user.MelangerMi()} )
 }
 function Sauvegarder() //Permet de sauvegarder le contexte
 {
