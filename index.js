@@ -14,15 +14,15 @@ var message
 function Utilisateur(nom) 
 {
     //Propriétés
-    this.Nom = nom                      //Nom du joueur
-    this.LamesMa = new Set()            //Pioche des lames majeures
-    this.DefausseMa = LamesMajeures     //Défausse des lames majeures
-    this.LamesMi = new Set()            //Pioche des lames mineures
-    this.DefausseMi = LamesMineures     //Défausse des lames mineures
+    Nom = nom                      //Nom du joueur
+    LamesMa = new Set()            //Pioche des lames majeures
+    DefausseMa = LamesMajeures     //Défausse des lames majeures
+    LamesMi = new Set()            //Pioche des lames mineures
+    DefausseMi = LamesMineures     //Défausse des lames mineures
 //A la création, les défausses sont initialisées avec les cartes et les pioches sont vides pour que dès le premier tirage il y ait un brassage de cartes
 
     //Méthodes
-    this.MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
+    MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
     {
         //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
         //Action répétée tant qu'il y a encore des cartes dans la défausse
@@ -39,7 +39,7 @@ function Utilisateur(nom)
             this.LamesMa.add(lame)//remise de la lame en bas de la pioche
         }
     }
-    this.MelangerMi = function() //permet de mélanger la défausse des lames mineures pour les remettre dans la pioche
+    MelangerMi = function() //permet de mélanger la défausse des lames mineures pour les remettre dans la pioche
     {
         //même principe que MelangerMa mais sur les pioches et défausses des lames mineures
         var index
@@ -55,7 +55,7 @@ function Utilisateur(nom)
             this.LamesMi.add(lame)
         }
     }
-    this.PiocherMa = function() //permet de piocher une lame majeure
+    PiocherMa = function() //permet de piocher une lame majeure
     {
         //Si la pioche est vide, on procède au mélange de la défausse avant de tirer une carte
         if(this.LamesMa.size == 0){ 
@@ -69,7 +69,7 @@ function Utilisateur(nom)
         this.DefausseMa.add(first.value)
         return first.value //renvoi la lame piochée pour afficher le message à l'utilisateur
     }
-    this.PiocherMi = function() //permet de piocher une lame mineure
+    PiocherMi = function() //permet de piocher une lame mineure
     {
         //fonctionne comme PiocherMa
         if(this.LamesMi.size == 0){
@@ -88,7 +88,14 @@ function Utilisateur(nom)
 function Init() //Permet de réinitialiser le bot
 {
     Utilisateurs.clear() //Efface la liste des utilisateurs
-    bot.users.cache.each(user => {if (user.bot){}else{Utilisateurs.add(Utilisateur(user.username))}}) //Crée un utilisateur par user du salon qui n'est pas un bot
+    message=''
+    bot.users.cache.each(user => {
+        console.log( 'Init user :' + user + ' username : '  + user.username + ' IsBot : ' + user.bot)
+        if (!user.bot){
+            console.log('Utilisateur.size : ' +Utilisateurs.size)
+            Utilisateurs.add(new Utilisateur(user.username))
+        }
+    }) //Crée un utilisateur par user du salon qui n'est pas un bot
     Utilisateurs.forEach(function(element){ //pour chaque utilisateur créé, on fait un premier battage des cartes
         this.DefausseMa = LamesMajeures
         this.MelangerMa() 
@@ -197,7 +204,7 @@ bot.on('message', function (msg)
             //réinitialisation de la partie
             case '--init':
                 console.log(msg.author.username + ' réinitilaise le bot')
-                msg.channel.send('On remet tout à zéro et on recommence ? OK !')
+                msg.channel.send('On remet tout à zéro et on recommence ? OK ! ')
                 Init()
                 break
 
