@@ -13,77 +13,77 @@ var message
 //Définition des types
 class Utilisateur
 {
-    Construtor(nom) 
+    construtor(nom) 
     {
         //Propriétés
-        Nom = nom                      //Nom du joueur
-        LamesMa = new Set()            //Pioche des lames majeures
-        DefausseMa = LamesMajeures     //Défausse des lames majeures
-        LamesMi = new Set()            //Pioche des lames mineures
-        DefausseMi = LamesMineures     //Défausse des lames mineures
+        this.Nom = nom                      //Nom du joueur
+        this.LamesMa = new Set()            //Pioche des lames majeures
+        this.DefausseMa = LamesMajeures     //Défausse des lames majeures
+        this.LamesMi = new Set()            //Pioche des lames mineures
+        this.DefausseMi = LamesMineures     //Défausse des lames mineures
     //A la création, les défausses sont initialisées avec les cartes et les pioches sont vides pour que dès le premier tirage il y ait un brassage de cartes
+    }
+    //Méthodes
+    MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
+    {
+        //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
+        //Action répétée tant qu'il y a encore des cartes dans la défausse
+        var index
+        var taille = this.DefausseMa.size
+        var lame
 
-        //Méthodes
-        MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
+        for(index=0; index < taille; index++)
         {
-            //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
-            //Action répétée tant qu'il y a encore des cartes dans la défausse
-            var index
-            var taille = this.DefausseMa.size
-            var lame
-
-            for(index=0; index < taille; index++)
-            {
-                var it = Array.from(this.DefausseMa) //converti la collection en tableau pour pouvoir atteinde les élément grâce à un index
-                lame = Math.floor(Math.random() * Math.floor(taille-index)) //détermination aléatoire de l'index à remettre dans la pioche
-                lame= it[lame]//détermination de la valeur de la lame ciblée
-                this.DefausseMa.delete(lame)//suppression de la lame dans la défausse
-                this.LamesMa.add(lame)//remise de la lame en bas de la pioche
-            }
-        }
-        MelangerMi = function() //permet de mélanger la défausse des lames mineures pour les remettre dans la pioche
-        {
-            //même principe que MelangerMa mais sur les pioches et défausses des lames mineures
-            var index
-            var taille = this.DefausseMi.size
-            var lame
-
-            for(index=0; index < taille; index++)
-            {
-                var it = Array.from(this.DefausseMi)
-                lame = Math.floor(Math.random() * Math.floor(taille-index))
-                lame= it[lame]
-                this.DefausseMi.delete(lame)
-                this.LamesMi.add(lame)
-            }
-        }
-        PiocherMa = function() //permet de piocher une lame majeure
-        {
-            //Si la pioche est vide, on procède au mélange de la défausse avant de tirer une carte
-            if(this.LamesMa.size == 0){ 
-                console.log('Plus de carte dispo, rebattage')
-                this.MelangerMa()}
-
-            //Comme pour le battage des carte, on passe par un tableau pour récupérer la valeur de la lame piochée
-            var it = this.LamesMa.values()
-            var first = it.next()
-            this.LamesMa.delete(first.value)
-            this.DefausseMa.add(first.value)
-            return first.value //renvoi la lame piochée pour afficher le message à l'utilisateur
-        }
-        PiocherMi = function() //permet de piocher une lame mineure
-        {
-            //fonctionne comme PiocherMa
-            if(this.LamesMi.size == 0){
-                console.log('Plus de carte dispo, rebattage')
-                this.MelangerMi()}
-            var it = this.LamesMi.values()
-            var first = it.next()
-            this.LamesMi.delete(first.value)
-            this.DefausseMi.add(first.value)
-            return first.value
+            var it = Array.from(this.DefausseMa) //converti la collection en tableau pour pouvoir atteinde les élément grâce à un index
+            lame = Math.floor(Math.random() * Math.floor(taille-index)) //détermination aléatoire de l'index à remettre dans la pioche
+            lame= it[lame]//détermination de la valeur de la lame ciblée
+            this.DefausseMa.delete(lame)//suppression de la lame dans la défausse
+            this.LamesMa.add(lame)//remise de la lame en bas de la pioche
         }
     }
+    MelangerMi = function() //permet de mélanger la défausse des lames mineures pour les remettre dans la pioche
+    {
+        //même principe que MelangerMa mais sur les pioches et défausses des lames mineures
+        var index
+        var taille = this.DefausseMi.size
+        var lame
+
+        for(index=0; index < taille; index++)
+        {
+            var it = Array.from(this.DefausseMi)
+            lame = Math.floor(Math.random() * Math.floor(taille-index))
+            lame= it[lame]
+            this.DefausseMi.delete(lame)
+            this.LamesMi.add(lame)
+        }
+    }
+    PiocherMa = function() //permet de piocher une lame majeure
+    {
+        //Si la pioche est vide, on procède au mélange de la défausse avant de tirer une carte
+        if(this.LamesMa.size == 0){ 
+            console.log('Plus de carte dispo, rebattage')
+            this.MelangerMa()}
+
+        //Comme pour le battage des carte, on passe par un tableau pour récupérer la valeur de la lame piochée
+        var it = this.LamesMa.values()
+        var first = it.next()
+        this.LamesMa.delete(first.value)
+        this.DefausseMa.add(first.value)
+        return first.value //renvoi la lame piochée pour afficher le message à l'utilisateur
+    }
+    PiocherMi = function() //permet de piocher une lame mineure
+    {
+        //fonctionne comme PiocherMa
+        if(this.LamesMi.size == 0){
+            console.log('Plus de carte dispo, rebattage')
+            this.MelangerMi()}
+        var it = this.LamesMi.values()
+        var first = it.next()
+        this.LamesMi.delete(first.value)
+        this.DefausseMi.add(first.value)
+        return first.value
+    }
+
 }
 
 //Définition des fonctions
