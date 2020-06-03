@@ -2,25 +2,25 @@
 const Discord = require('discord.js')
 const bot = new Discord.Client()
 const fs = require('fs')
-bot.context = require("./context.json")
 Config = require("./config.json")
-const LamesMajeures = new Set(['le Mat','le Bateleur','la Papesse','l’Impératrice','l’Empereur','le Pape','l’Amoureux','le Chariot','la Justice','l’Hermite','la Roue','la Force','le Pendu','l’Arcane sans Nom','la Tempérance','le Diable','la Maison-Dieu','l’Étoile','la lune','le Soleil','le Jugement','le Monde','le Bateleur renversé','la Papesse renversé','l’Impératrice renversé','l’Empereur renversé','le Pape renversé','l’Amoureux renversé','le Chariot renversé','la Justice renversé','l’Hermite renversé','la Roue renversé','la Force renversé','le Pendu renversé','l’Arcane sans Nom renversé','la Tempérance renversé','le Diable renversé','la Maison-Dieu renversé','l’Étoile renversé','la lune renversé','le Soleil renversé','le Jugement renversé','le Monde renversé'])
-const LamesMineures = new Set(['valet de coupes','cavalier de coupes','reine de coupes','roi de coupes','valet d\'épées','cavalier d\'épées','reine d\'épées','roi d\'épées','valet de batons','cavalier de batons','reine de batons','roi de batons','valet de deniers','cavalier de deniers','reine de deniers','roi de deniers'])
-const Utilisateurs = new Set()
+const LamesMajeures = new Set(['le Mat','le Bateleur','la Papesse','l’Impératrice','l’Empereur','le Pape','l’Amoureux','le Chariot','la Justice','l’Hermite','la Roue','la Force','le Pendu','l’Arcane sans Nom','la Tempérance','le Diable','la Maison-Dieu','l’Étoile','la lune','le Soleil','le Jugement','le Monde','le Bateleur renversé','la Papesse renversée','l’Impératrice renversée','l’Empereur renversé','le Pape renversé','l’Amoureux renversé','le Chariot renversé','la Justice renversée','l’Hermite renversé','la Roue renversée','la Force renversée','le Pendu renversé','l’Arcane sans Nom renversée','la Tempérance renversée','le Diable renversé','la Maison-Dieu renversée','l’Étoile renversée','la lune renversée','le Soleil renversé','le Jugement renversé','le Monde renversé'])
+const LamesMineures = new Set(['valet de coupes','cavalier de coupes','reine de coupes','roi de coupes','valet d’épées','cavalier d’épées','reine d’épées','roi d’épées','valet de batons','cavalier de batons','reine de batons','roi de batons','valet de deniers','cavalier de deniers','reine de deniers','roi de deniers'])
+const Serveurs = new Map() // liste des serveurs sur lesquel est le botUne collection de type Map permet d'utiliser la méthode get(clé) pour faire référence à un de ses éléments. Ce qui n'est pas possible dans un Set.
 var message
 
-
 //Définition des types
-class Utilisateur
+class Joueur
 {
-    constructor(nom) 
+    constructor(guildmember,username) 
     {
         //Propriétés
-        this.Nom = nom                      //Nom du joueur
-        this.LamesMa = new Set()            //Pioche des lames majeures
-        this.DefausseMa = new Set()            //Défausse des lames majeures
-        this.LamesMi = new Set()           //Pioche des lames mineures
-        this.DefausseMi = new Set()            //Défausse des lames mineures
+        this.Surnom = guildmember.displayName   //Allias du joueur
+        this.Nom = username                     //Nom du joueur
+        this.Id = guildmember.id                //Id du joueur
+        this.LamesMa = new Set()                //Pioche des lames majeures
+        this.DefausseMa = new Set()             //Défausse des lames majeures
+        this.LamesMi = new Set()                //Pioche des lames mineures
+        this.DefausseMi = new Set()             //Défausse des lames mineures
     //A la création, les défausses sont initialisées avec les cartes et les pioches sont vides pour que dès le premier tirage il y ait un brassage de cartes
     }
     //Méthodes
@@ -34,7 +34,6 @@ class Utilisateur
             that.DefausseMi.add(carte)
         })
     }
-
     MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
     {
         //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
@@ -94,50 +93,66 @@ class Utilisateur
         this.DefausseMi.add(first.value)
         return first.value
     }
-
 }
+class Serveur{
+    constructor(guild)
+    {
+        this.Nom = guild.name
+        this.Id = guild.id
+        this.Joueurs = new Map()
+    }
+}
+
 
 //Définition des fonctions
-function Init() //Permet de réinitialiser le bot
+function Init() //Permet de d'initialiser le bot
 {
-    Utilisateurs.clear() //Efface la liste des utilisateurs
-    message=''
-    bot.users.cache.each(user => {
-        if (!user.bot){//Crée un utilisateur par user du salon qui n'est pas un bot
-            NouvelUtilisateur = new Utilisateur(user.username)
-            NouvelUtilisateur.SetDefausses()
-            NouvelUtilisateur.MelangerMa() 
-            NouvelUtilisateur.MelangerMi()
-            Utilisateurs.add(NouvelUtilisateur)
-        }
+    Serveurs.clear()
+    bot.guilds.cache.each(guild =>{
+        NouveauServeur= new Serveur(guild)
+        guild.members.cache.each(guildmember =>{
+            if (!guildmember.user.bot){//Crée un utilisateur par user du salon qui n'est pas un bot
+                NouveauJoueur = new Joueur(guildmember, guildmember.user.username)
+                NouveauJoueur.SetDefausses()
+                NouveauJoueur.MelangerMa() 
+                NouveauJoueur.MelangerMi()
+                NouveauServeur.Joueurs.set(NouveauJoueur.Id,NouveauJoueur)
+            }
+        })
+        Serveurs.set(guild.id,NouveauServeur)
     }) 
 }
-function Sauvegarder() //Permet de sauvegarder le contexte
+function Sauvegarder(GuildId) //Permet de sauvegarder le contexte
 {
-    message=""
     //pour chaque utilisateur on va sauvegarder l'état des 4 collections de cartes
-    Utilisateurs.forEach(function(utilisateur)
+    var guild = Serveurs.get(GuildId)
+    var Contexte = new Object()
+    var Fichier = "./context_"+guild.Nom+".json"
+    
+    guild.Joueurs.forEach(function(joueur) 
     {
-        bot.context[utilisateur.Nom]=
+        Contexte[joueur.Id]= //Les utilisateurs sont référencés par leur id 
         {
-            Nom: utilisateur.Nom,
-            LamesMa: Array.from(utilisateur.LamesMa), //Afin de les sauvegarde au format JSON, il faut les transformer en tableau
-            DefausseMa: Array.from(utilisateur.DefausseMa),
-            LamesMi: Array.from(utilisateur.LamesMi),
-            DefausseMi: Array.from(utilisateur.DefausseMi)
+            Nom: joueur.Surnom, //On sauvegarde aussi le mom, pour une meilleure lisibilité du fichier
+            LamesMa: Array.from(joueur.LamesMa), //Afin de les sauvegarde au format JSON, il faut les transformer en tableau
+            DefausseMa: Array.from(joueur.DefausseMa),
+            LamesMi: Array.from(joueur.LamesMi),
+            DefausseMi: Array.from(joueur.DefausseMi)
         }
-        //écriture du fichier JSON
-        fs.writeFile("./context.json",JSON.stringify(bot.context,null,4), err =>
-        {
-            if(err) throw  err
-            })
+        console.log(typeof(Contexte))
     })
+     //écriture du fichier JSON
+     fs.writeFile(Fichier,JSON.stringify(Contexte,null,4), err =>
+     {
+         if(err) throw  err
+         })
 }
-function Charger() {//Permet de charger le contexte précédement sauvegardé
-        var JSONfile = JSON.parse(fs.readFileSync("./context.json", "utf8"))
-        Utilisateurs.forEach(function(utilisateur){
-            var utilisateurJSON = JSONfile[utilisateur.Nom]
-            if( utilisateurJSON){
+function Charger(GuildId) {//Permet de charger le contexte précédement sauvegardé
+        var guild = Serveurs.get(GuildId)
+        var JSONfile = JSON.parse(fs.readFileSync("./context_"+guild.Nom+".json", "utf8")) //On ouvre le fichier de contexte
+        guild.Joueurs.forEach(function(utilisateur){ //Pour chaque utilisateur
+            var utilisateurJSON = JSONfile[utilisateur.Id] //On vérifie au'il existe dans le fichier de contexte
+            if( utilisateurJSON){   //Si oui, on récupère létat des piles
                 utilisateur.LamesMa =  new Set(utilisateurJSON.LamesMa)
                 utilisateur.DefausseMa = new Set(utilisateurJSON.DefausseMa)
                 utilisateur.LamesMi = new Set(utilisateurJSON.LamesMi)
@@ -145,6 +160,8 @@ function Charger() {//Permet de charger le contexte précédement sauvegardé
             }
          })
     }
+
+
 //Initialisation du bot
 bot.login(Config.token)
 bot.on('ready', () => 
@@ -155,8 +172,7 @@ bot.on('ready', () =>
     bot.user.setActivity(Config.Prefix + 'help')
 })
 
-
-//détection des commandes dans les messages du serveur
+//Détection des commandes dans les messages du serveur
 bot.on('message', function (msg)
 {
     if(msg.content.startsWith(Config.Prefix) && !msg.author.bot)
@@ -164,72 +180,72 @@ bot.on('message', function (msg)
         msg.content = msg.content.toLowerCase()
         switch (msg.content)
         {
-            //Demande d'une lame majeure
-            case Config.Prefix + 'ma':
+            
+            case Config.Prefix + 'ma':{//Demande d'une lame majeure
                 console.log(msg.author.username + ' pioche une lame majeure')
-                Utilisateurs.forEach(function(utilisateur) //parse la collection des utilisateur
-                {
-                    if(utilisateur.Nom === msg.author.username)// détecte le joueur qui a envoyé la commande
-                    {
-                        var lame = utilisateur.PiocherMa() //tire une carte dans la collection du joueur
-                        message = '***' + msg.author.username +'*** a pioché la lame majeure suivante : **' + lame+'**'
-                        console.log(message)
-                        msg.channel.send(message)
-                    }
-                })    
+                var guild=Serveurs.get(msg.channel.guild.id)
+                var lame = guild.Joueurs.get(msg.author.id).PiocherMa()//On exécute la méthode PiocherMa pour l'utilisateur ayant envoyé le méssage grâce à son id
+                message = '***' + msg.member.nickname +'*** a pioché la lame majeure suivante : **' + lame+'**'
+                console.log(message)
+                var PieceJointe = new Discord.MessageAttachment ('./Images/'+lame+'.jpg')
+                msg.channel.send(message,PieceJointe)  
                 break
-
-
-            //Demande d'une lame mineure, fonctionne pareil que pour les lames mineures
-            case Config.Prefix + 'mi':
+            }
+             
+            case Config.Prefix + 'mi':{//Demande d'une lame mineure, fonctionne pareil que pour les lames majeures
                 console.log(msg.author.username + ' pioche une lame mineure')
-                Utilisateurs.forEach(function(utilisateur)
-                {
-                    if(utilisateur.Nom === msg.author.username)
-                    {
-                        var lame = utilisateur.PiocherMi()
-                        message = '***' + msg.author.username +'*** a pioché la lame mineure suivante : **' + lame+'**'
-                        console.log(message)
-                        msg.channel.send(message)
-                    }
-                })    
+                var guild=Serveurs.get(msg.channel.guild.id)
+                var lame = guild.Joueurs.get(msg.author.id).PiocherMi() //On exécute la méthode PiocherMi pour l'utilisateur ayant envoyé le méssage grâce à son id
+                message = '***' + msg.author.username +'*** a pioché la lame mineure suivante : **' + lame+'**'
+                console.log(message)
+                var PieceJointe = new Discord.MessageAttachment ('./Images/'+lame+'.jpg')
+                msg.channel.send(message,PieceJointe)  
                 break
-
-
-            //Liste des utilisateurs
-            case Config.Prefix + 'users':
-                console.log(msg.author.username + ' demande de liste des utilisateurs référencés')
+            }
+           
+            case Config.Prefix + 'guilds':{//Affiche la liste des serveurs o'u est le bot
+                console.log(msg.author.username + ' demande de liste des serveurs référencés')
                 message = ''
-                Utilisateurs.forEach(function(utilisateur){ message = message + utilisateur.Nom + '\n'} )
+                Serveurs.forEach(function(guild){ 
+                    message = message + guild.Nom + '\n'
+                } )
                 msg.channel.send(message)
                 break
-
-
-            //réinitialisation de la partie
-            case Config.Prefix + 'init':
+            }
+           
+            case Config.Prefix + 'users':{//Affiche la liste des utilisateurs
+                console.log(msg.author.username + ' demande de liste des utilisateurs référencés')
+                message = ''
+                var Guild=Serveurs.get(msg.channel.guild.id)
+                Guild.Joueurs.forEach(function(utilisateur){
+                     message = message + utilisateur.Nom + ' allias : ' + utilisateur.Surnom+ '\n'
+                } )
+                msg.channel.send(message)
+                break
+            }
+           
+            case Config.Prefix + 'init':{//réinitialisation de la partie du bot
                 console.log(msg.author.username + ' réinitilaise le bot')
                 msg.channel.send('On remet tout à zéro et on recommence ? OK ! ')
                 Init()
                 break
-
-            //Sauvegarde du contexte
-            case Config.Prefix + 'save':            case Config.Prefix + 'sauve':
+            }
+           
+            case Config.Prefix + 'save':            case Config.Prefix + 'sauve':{//Sauvegarde du contexte, c'est à dire de l'état des piles de cartes de chaque utilisateurs
                 console.log(msg.author.username + ' sauvegarde le contexte')
-                Sauvegarder()
+                Sauvegarder(msg.channel.guild.id)
                 msg.channel.send("sauvegarde effectuée")
                 break
-            
+            }
 
-            //Récupération du contexte
-            case Config.Prefix + 'load':
+            case Config.Prefix + 'load':{ //Récupération du contexte, restaure l'état des piles qui a été sauvegardé
                 console.log(msg.author.username + ' recharge le contexte')
-                Charger()
+                Charger(msg.channel.guild.id)
                 msg.channel.send("Vous vous souvenez des cartes déjà tirées ? Non ? bah moi oui ! \nC'est bon vous pouvez reprendre :) ")
                 break
-
+            }
             
-            //Affichage de l'aide
-            case Config.Prefix + 'help':    case Config.Prefix + '?' :
+            case Config.Prefix + 'help':    case Config.Prefix + '?' : {//Affichage l'aide aux joueurs
                 console.log(msg.author.username + ' demande de l\'aide')
                 message = Config.Prefix + 'r : permet de faire un jet de dé(s), la commande est sous la forme --r3d10[f7] avec : \n'
                 message = message + '          - 3 = nombre de dés à lancer\n'
@@ -239,27 +255,30 @@ bot.on('message', function (msg)
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
                 msg.channel.send(message)
                 break
-            case Config.Prefix + 'helpmj':
+            }
+            case Config.Prefix + 'helpmj':{//Affiche l'aide complète
                 message = Config.Prefix + ' : permet de faire un jet de dé(s), la commande est sous la forme '+ Config.Prefix +'3d10[f7] avec : \n'
                 message = message + '          - 3 = nombre de dés à lancer\n'
                 message = message + '          - 10 = nombre de face dés dés lancés\n'
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
                 message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
+                message = message + Config.Prefix + 'guilds : permet d\'afficher la liste des serveurs sur lesquels se trouve le bot\n'
                 message = message + Config.Prefix + 'users : permet d\'afficher les utilisateurs\n'
                 message = message + Config.Prefix + 'init : permet de réinitialiser le bot\n'
-                message = message + Config.Prefix + 'save : permet de sauvegarder le contexte dans le fichier ./context.JSON\n'
-                message = message + Config.Prefix + 'load : permet de récupéré le contexte depuis le fichier ./context.JSON\n'
+                message = message + Config.Prefix + 'save : permet de sauvegarder le contexte dans le fichier ./context_'+msg.channel.guild.name+'.JSON\n'
+                message = message + Config.Prefix + 'load : permet de récupéré le contexte depuis le fichier ./context_'+msg.channel.guild.name+'.JSON\n'
                 msg.channel.send(message)
                 break
+            }       
             
-            default: 
+            default: //Toutes les autres commandes
 
-            //Détection d'une commande de jet de dés --r
-            if (msg.content.startsWith(Config.Prefix + '') && msg.content.includes('d') ) //format de la commande : --rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
+            //Détection d'une commande de jet de dés : débute par le préfixe défini et contient la lettre "d"
+            if (msg.content.startsWith(Config.Prefix) && msg.content.includes('d') ) //format de la commande : --rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
             {
                 console.log(msg.author + ' lance les dés : ' + msg.content)
-                var commande = msg.content.slice(Config.Prefix.length).trim()
+                var commande = msg.content.slice(Config.Prefix.length).trim() //on supprime le préfixe (slice) et on supprime aussi les espaces avant et après (trim)
                 var resultats =[]
                 var index =0
                 var NbJets =0
@@ -267,9 +286,10 @@ bot.on('message', function (msg)
                 var Facilite =0
                 var succes = 0 
                 var resultatDe =0
-                var EchecCritique = true
+                var EchecCritique = true //si tous les dés sont >10, c'est un échec critique. Le premier dé qvec une valeur inférieure à 1 viendra réseter ce flag
                 var JetAvecFacilite = commande.includes('f')
 
+                //Détermination du nombre de dés, de leur taille et de facilité (si cette dernière est souhaitée)
                 if (JetAvecFacilite)
                 {
                     //initialistion des jets avec facilité
@@ -294,28 +314,31 @@ bot.on('message', function (msg)
                     }
                 }
                 
+                //Exécution des jets de dés
                 for(index=0; index< NbJets; index++)
                 {
-                    resultatDe = Math.round(Math.random() * (TailleDes-1))+1
-                    resultats.push(resultatDe)
-                    if(JetAvecFacilite)
+                    resultatDe = Math.round(Math.random() * (TailleDes-1))+1 //calcul aléatoire du résultat
+                    resultats.push(resultatDe) //enregistrement du résultat
+                    if(JetAvecFacilite)//Pour les jets avec facilité, on ne regarde que les succès
                     {
-                        if(resultatDe == 1){succes +=2}else{if(resultatDe<=Facilite){succes+=1}}
+                        if(resultatDe == 1){succes +=2}else{if(resultatDe<=Facilite){succes+=1}} //Les "1" sont comptés comme 2 succès. Sinon on regarder si le résultat est < facilité 
                         if(resultatDe<10){EchecCritique=false}
+                        
+                        //création du message envoyé
                         if(EchecCritique)
                         {
-                            message = '***' + msg.author.username + '*** a réalisé un __**ECHEC CRITIQUE**__ **! ! ! ! ! !** \n'
+                            message = '***' + msg.member.nickname + '*** a réalisé un __**ECHEC CRITIQUE**__ **! ! ! ! ! !** \n'
                             message = message + '[ ' + resultats + ' ]'
                         }
                         else
                         {
-                            message = '***' + msg.author.username + '*** a réalisé **' + succes + '** succès \n'
+                            message = '***' + msg.member.nickname + '*** a réalisé **' + succes + '** succès \n'
                             message = message + '[ ' + resultats + ' ] D =<' + Facilite
                         }
                     }
-                    else
+                    else //sans facilité, on renvoi juste la valeur des dés
                     {
-                        message = '***' + msg.author.username + '*** a obtenu : [ **' + resultats +'** ]'
+                        message = '***' + msg.member.nickname + '*** a obtenu : [ **' + resultats +'** ]'
                     }
                 }
                 
