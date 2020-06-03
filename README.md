@@ -1,15 +1,19 @@
 # Bot Discord pour Pavillon Noir 2
-Ce bot a été développé pour améliorer l'expérience du jeu de rôle Pavillon Noir lors des parties virtuelle sur l'application Discord. 
+Ce bot a été développé pour améliorer l'expérience du jeu de rôle Pavillon Noir lors des parties virtuelle sur l'application Discord.
+Il peut être invité dans plusieurs serveurs sans aucun porblème pour gérer plusieurs parties sans se mélanger les pinceaux.
+
 Les commandes existantes permettent aux joueurs de : 
-  - Réaliser des jets de dés en affichant directement si besoin le nombre de succès obtenus
-  - Gérer les piles de cartes permettant de jouer les règles de Entre Ciel et Terre
-  - Afficher les commandes des joueurs
+  - Réaliser des jets de dés en affichant directement si besoin le nombre de succès obtenus ;
+  - Gérer les piles de cartes permettant de jouer les règles de Entre Ciel et Terre ;
+  - Afficher les commandes des joueurs.
  
  Des commandes supplémentaires existent afin de : 
-  - Afficher les utilisateurs gérés par le bot
-  - Sauvegarder le contexte (l'état des piles de cartes de chacun des joueurs)
-  - Restaurer un contexte sauvegardé
-  - Afficher l'ensemble des commandes existantes
+  - Afficher les serveurs oú votre instance du bot est présente ;
+  - Afficher les utilisateurs du serveur dans lequel vous effectuez la commande;
+  - Sauvegarder le contexte du serveur sur lequel la commande est effectuée (l'état des piles de cartes de chacun des joueurs) ;
+  - Restaurer le contexte sauvegardé du serveur sur lequel la commande est passée ;
+  - Réinitialiser le contexte du serveur sur lequel la commande est saisie ;
+  - Afficher l'ensemble des commandes existantes.
   
 # Liste de commandes : 
   !1d12 : Permet de lancer 1 dé à 12 faces et affiche le résultat du ou des dés
@@ -18,8 +22,10 @@ Les commandes existantes permettent aux joueurs de :
   !mi : Permet de tirer une lame mineure. Le bot indique le nom de la lame. Lorsque toutes les lames mineures ont été tirées, le bot remélange automatiquement le paquet
   !help : Permet d'afficher les commandes destinées aux joueurs
   !helpmj : Permet d'afficher toutes les commandes du bot
-  !save : Permet de sauvegarder l'état des piles de cartes des joueurs dans le fichier contexte.json
-  !load : Permet de rétablir un état des piles de cartes des joueurs sauvegardé dans le fichier contexte.json
+  !guilds : Permet d'afficher les serveurs sur lequel l'instance du bot est invitée
+  !users : Permet d'afficher la liste des utilisateurs du serveur
+  !save : Permet de sauvegarder l'état des piles de cartes des joueurs dans le fichier "contexte_Nom serveru.json" (il sera automatiquement crée s'il n'existe pas déjà)
+  !load : Permet de rétablir un état des piles de cartes des joueurs sauvegardé dans le fichier "contexte_Nom serveru.json"
   !init : Permet de réinitialiser l'état des piles de cartes de tous les joueurs
   
 # Comment utiliser le bot sur son serveur Discord ? 
