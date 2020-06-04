@@ -2,7 +2,7 @@
 const Discord = require('discord.js')
 const bot = new Discord.Client()
 const fs = require('fs')
-Config = require("./config.json")
+Config = require(__dirname+"/config.json")
 const LamesMajeures = new Set(['le Mat','le Bateleur','la Papesse','l’Impératrice','l’Empereur','le Pape','l’Amoureux','le Chariot','la Justice','l’Hermite','la Roue','la Force','le Pendu','l’Arcane sans Nom','la Tempérance','le Diable','la Maison-Dieu','l’Étoile','la lune','le Soleil','le Jugement','le Monde','le Bateleur renversé','la Papesse renversée','l’Impératrice renversée','l’Empereur renversé','le Pape renversé','l’Amoureux renversé','le Chariot renversé','la Justice renversée','l’Hermite renversé','la Roue renversée','la Force renversée','le Pendu renversé','l’Arcane sans Nom renversée','la Tempérance renversée','le Diable renversé','la Maison-Dieu renversée','l’Étoile renversée','la lune renversée','le Soleil renversé','le Jugement renversé','le Monde renversé'])
 const LamesMineures = new Set(['valet de coupes','cavalier de coupes','reine de coupes','roi de coupes','valet d’épées','cavalier d’épées','reine d’épées','roi d’épées','valet de batons','cavalier de batons','reine de batons','roi de batons','valet de deniers','cavalier de deniers','reine de deniers','roi de deniers'])
 const Serveurs = new Map() // liste des serveurs sur lesquel est le botUne collection de type Map permet d'utiliser la méthode get(clé) pour faire référence à un de ses éléments. Ce qui n'est pas possible dans un Set.
@@ -127,7 +127,7 @@ function Sauvegarder(GuildId) //Permet de sauvegarder le contexte
     //pour chaque utilisateur on va sauvegarder l'état des 4 collections de cartes
     var guild = Serveurs.get(GuildId)
     var Contexte = new Object()
-    var Fichier = "./context_"+guild.Nom+".json"
+    var Fichier = __dirname+ "\\context_"+guild.Nom+".json"
     
     guild.Joueurs.forEach(function(joueur) 
     {
@@ -149,7 +149,9 @@ function Sauvegarder(GuildId) //Permet de sauvegarder le contexte
 }
 function Charger(GuildId) {//Permet de charger le contexte précédement sauvegardé
         var guild = Serveurs.get(GuildId)
-        var JSONfile = JSON.parse(fs.readFileSync("./context_"+guild.Nom+".json", "utf8")) //On ouvre le fichier de contexte
+        var Fichier = __dirname+ "\\context_"+guild.Nom+".json"
+
+        var JSONfile = JSON.parse(fs.readFileSync(Fichier, "utf8")) //On ouvre le fichier de contexte
         guild.Joueurs.forEach(function(utilisateur){ //Pour chaque utilisateur
             var utilisateurJSON = JSONfile[utilisateur.Id] //On vérifie au'il existe dans le fichier de contexte
             if( utilisateurJSON){   //Si oui, on récupère létat des piles
@@ -185,9 +187,9 @@ bot.on('message', function (msg)
                 console.log(msg.author.username + ' pioche une lame majeure')
                 var guild=Serveurs.get(msg.channel.guild.id)
                 var lame = guild.Joueurs.get(msg.author.id).PiocherMa()//On exécute la méthode PiocherMa pour l'utilisateur ayant envoyé le méssage grâce à son id
-                message = '***' + msg.member.nickname +'*** a pioché la lame majeure suivante : **' + lame+'**'
+                message = '***' + msg.member.displayName +'*** a pioché la lame majeure suivante : **' + lame+'**'
                 console.log(message)
-                var PieceJointe = new Discord.MessageAttachment ('./Images/'+lame+'.jpg')
+                var PieceJointe = new Discord.MessageAttachment (__dirname+'\\Images/'+lame+'.jpg')
                 msg.channel.send(message,PieceJointe)  
                 break
             }
@@ -196,9 +198,9 @@ bot.on('message', function (msg)
                 console.log(msg.author.username + ' pioche une lame mineure')
                 var guild=Serveurs.get(msg.channel.guild.id)
                 var lame = guild.Joueurs.get(msg.author.id).PiocherMi() //On exécute la méthode PiocherMi pour l'utilisateur ayant envoyé le méssage grâce à son id
-                message = '***' + msg.author.username +'*** a pioché la lame mineure suivante : **' + lame+'**'
+                message = '***' + msg.member.displayName +'*** a pioché la lame mineure suivante : **' + lame+'**'
                 console.log(message)
-                var PieceJointe = new Discord.MessageAttachment ('./Images/'+lame+'.jpg')
+                var PieceJointe = new Discord.MessageAttachment (__dirname+'\\Images/'+lame+'.jpg')
                 msg.channel.send(message,PieceJointe)  
                 break
             }
@@ -327,18 +329,18 @@ bot.on('message', function (msg)
                         //création du message envoyé
                         if(EchecCritique)
                         {
-                            message = '***' + msg.member.nickname + '*** a réalisé un __**ECHEC CRITIQUE**__ **! ! ! ! ! !** \n'
+                            message = '***' + msg.member.displayName + '*** a réalisé un __**ECHEC CRITIQUE**__ **! ! ! ! ! !** \n'
                             message = message + '[ ' + resultats + ' ]'
                         }
                         else
                         {
-                            message = '***' + msg.member.nickname + '*** a réalisé **' + succes + '** succès \n'
+                            message = '***' + msg.member.displayName + '*** a réalisé **' + succes + '** succès \n'
                             message = message + '[ ' + resultats + ' ] D =<' + Facilite
                         }
                     }
                     else //sans facilité, on renvoi juste la valeur des dés
                     {
-                        message = '***' + msg.member.nickname + '*** a obtenu : [ **' + resultats +'** ]'
+                        message = '***' + msg.member.displayName + '*** a obtenu : [ **' + resultats +'** ]'
                     }
                 }
                 
