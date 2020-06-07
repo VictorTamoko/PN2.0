@@ -20,6 +20,7 @@ Les commandes existantes permettent aux joueurs de :
   !3d10f6 : Permet de lancer 3 dés à 10 faces, avec une facilité de 6. Le bot affiche le résultat des dés ainsi que le nombre de succès (les 1 sont comptés comme deux succès)
   !ma : Permet de tirer une lame majeure. Le bot indique le nom de la lame. Lorsque toutes les lames majeures ont été tirées, le bot remélange automatiquement le paquet 
   !mi : Permet de tirer une lame mineure. Le bot indique le nom de la lame. Lorsque toutes les lames mineures ont été tirées, le bot remélange automatiquement le paquet
+  !mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage
   !help : Permet d'afficher les commandes destinées aux joueurs
   !helpmj : Permet d'afficher toutes les commandes du bot
   !guilds : Permet d'afficher les serveurs sur lequel l'instance du bot est invitée
@@ -27,6 +28,9 @@ Les commandes existantes permettent aux joueurs de :
   !save : Permet de sauvegarder l'état des piles de cartes des joueurs dans le fichier "contexte_Nom serveru.json" (il sera automatiquement crée s'il n'existe pas déjà)
   !load : Permet de rétablir un état des piles de cartes des joueurs sauvegardé dans le fichier "contexte_Nom serveru.json"
   !init : Permet de réinitialiser l'état des piles de cartes de tous les joueurs
+  !lr : permet de retirer des lames renversées de leurs piches en citant des joueurs, sous la forme : !lr x @joueur1 @joueur2...
+          - x = nombre de cartes à retirer
+          - @joueur = nom de joueur cité en utilisant le caractère @
   
 # Comment utiliser le bot sur son serveur Discord ? 
 Le bot n'est pas hébergé sur un serveur online. Il faut le télécharger et le lancer sur son poste.
