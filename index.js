@@ -21,6 +21,7 @@ class Joueur
         this.DefausseMa = new Set()             //Défausse des lames majeures
         this.LamesMi = new Set()                //Pioche des lames mineures
         this.DefausseMi = new Set()             //Défausse des lames mineures
+        this.LamesRenversees = new Set()        //Nombre de lames renversées tirées
     //A la création, les défausses sont initialisées avec les cartes et les pioches sont vides pour que dès le premier tirage il y ait un brassage de cartes
     }
     //Méthodes
@@ -33,15 +34,24 @@ class Joueur
         LamesMineures.forEach(function(carte){
             that.DefausseMi.add(carte)
         })
+        that.LamesRenversees.clear()
     }
     MelangerMa = function() //permet de mélanger la défausse des lames majeures pour les remettre dans la pioche
     {
         //le mélange se fait en replaçant aléatoirement une valeur de la collection de défausse en bas de la dans la pioche
         //Action répétée tant qu'il y a encore des cartes dans la défausse
         var index
-        var taille = this.DefausseMa.size
+        var taille
         var lame
 
+        var that = this
+        that.LamesMa.forEach(function(carte){ //au moment de mélanger, on regroupe la pioche et la défausse en conservant les lames renversées
+            that.DefausseMa.add(carte)
+        })
+        that.LamesMa.clear()
+
+        //on procède au mélange
+        taille = this.DefausseMa.size
         for(index=0; index < taille; index++)
         {
             var it = Array.from(this.DefausseMa) //converti la collection en tableau pour pouvoir atteinde les élément grâce à un index
@@ -55,9 +65,17 @@ class Joueur
     {
         //même principe que MelangerMa mais sur les pioches et défausses des lames mineures
         var index
-        var taille = this.DefausseMi.size
+        var taille
         var lame
 
+        var that = this
+        that.LamesMi.forEach(function(carte){ //au moment de mélanger, on regroupe la pioche et la défausse en conservant les lames renversées
+            that.DefausseMi.add(carte)
+        })
+        that.LamesMi.clear()
+
+        //on procède au mélange
+        taille = this.DefausseMi.size
         for(index=0; index < taille; index++)
         {
             var it = Array.from(this.DefausseMi)
@@ -78,7 +96,12 @@ class Joueur
         var it = this.LamesMa.values()
         var first = it.next()
         this.LamesMa.delete(first.value)
-        this.DefausseMa.add(first.value)
+        if (first.value.includes('renversé')){ // || first.includes('coupes') || first.includes('batons')
+            this.LamesRenversees.add(first.value)
+        }
+        else {
+            this.DefausseMa.add(first.value)
+        }
         return first.value //renvoi la lame piochée pour afficher le message à l'utilisateur
     }
     PiocherMi = function() //permet de piocher une lame mineure
@@ -87,10 +110,16 @@ class Joueur
         if(this.LamesMi.size == 0){
             console.log('Plus de carte dispo, rebattage')
             this.MelangerMi()}
+
         var it = this.LamesMi.values()
         var first = it.next()
         this.LamesMi.delete(first.value)
-        this.DefausseMi.add(first.value)
+        if(first.value.includes('coupes') || first.value.includes('batons')){
+            this.LamesRenversees.add(first.value)
+        }
+        else {
+            this.DefausseMi.add(first.value)
+        }
         return first.value
     }
 }
@@ -137,7 +166,8 @@ function Sauvegarder(GuildId) //Permet de sauvegarder le contexte
             LamesMa: Array.from(joueur.LamesMa), //Afin de les sauvegarde au format JSON, il faut les transformer en tableau
             DefausseMa: Array.from(joueur.DefausseMa),
             LamesMi: Array.from(joueur.LamesMi),
-            DefausseMi: Array.from(joueur.DefausseMi)
+            DefausseMi: Array.from(joueur.DefausseMi),
+            LamesRenversees: Array.from(joueur.LamesRenversees)
         }
         console.log(typeof(Contexte))
     })
@@ -159,6 +189,7 @@ function Charger(GuildId) {//Permet de charger le contexte précédement sauvega
                 utilisateur.DefausseMa = new Set(utilisateurJSON.DefausseMa)
                 utilisateur.LamesMi = new Set(utilisateurJSON.LamesMi)
                 utilisateur.DefausseMi = new Set(utilisateurJSON.DefausseMi)
+                utilisateur.LamesRenversees = new Set(utilisateurJSON.LamesRenversees)
             }
          })
     }
@@ -185,9 +216,10 @@ bot.on('message', function (msg)
             
             case Config.Prefix + 'ma':{//Demande d'une lame majeure
                 console.log(msg.author.username + ' pioche une lame majeure')
-                var guild=Serveurs.get(msg.channel.guild.id)
-                var lame = guild.Joueurs.get(msg.author.id).PiocherMa()//On exécute la méthode PiocherMa pour l'utilisateur ayant envoyé le méssage grâce à son id
-                message = '***' + msg.member.displayName +'*** a pioché la lame majeure suivante : **' + lame+'**'
+                var joueur = Serveurs.get(msg.channel.guild.id).Joueurs.get(msg.author.id)
+                var lame = joueur.PiocherMa()//On exécute la méthode PiocherMa pour l'utilisateur ayant envoyé le méssage grâce à son id
+                message = '***' + joueur.Surnom +'*** a pioché la lame majeure suivante : **' + lame+'**\n'
+                message = message + '***' + joueur.Surnom +'*** en est à **' + joueur.LamesRenversees.size + '** lames renversées' 
                 console.log(message)
                 var PieceJointe = new Discord.MessageAttachment (__dirname+'\\Images/'+lame+'.jpg')
                 msg.channel.send(message,PieceJointe)  
@@ -196,12 +228,21 @@ bot.on('message', function (msg)
              
             case Config.Prefix + 'mi':{//Demande d'une lame mineure, fonctionne pareil que pour les lames majeures
                 console.log(msg.author.username + ' pioche une lame mineure')
-                var guild=Serveurs.get(msg.channel.guild.id)
-                var lame = guild.Joueurs.get(msg.author.id).PiocherMi() //On exécute la méthode PiocherMi pour l'utilisateur ayant envoyé le méssage grâce à son id
-                message = '***' + msg.member.displayName +'*** a pioché la lame mineure suivante : **' + lame+'**'
+                var joueur=Serveurs.get(msg.channel.guild.id).Joueurs.get(msg.author.id)
+                var lame = joueur.PiocherMi() //On exécute la méthode PiocherMi pour l'utilisateur ayant envoyé le méssage grâce à son id
+                message = '***' + joueur.Surnom +'*** a pioché la lame mineure suivante : **' + lame+'**\n'
+                message = message + '***' + joueur.Surnom +'*** en est à **' + joueur.LamesRenversees.size + '** lames renversées' 
                 console.log(message)
                 var PieceJointe = new Discord.MessageAttachment (__dirname+'\\Images/'+lame+'.jpg')
                 msg.channel.send(message,PieceJointe)  
+                break
+            }
+
+            case Config.Prefix + 'mel':{//Demande de mélange des cartes pour initier un nouveau tirage
+                console.log(msg.author.username + ' mélange ses cartes')
+                var joueur = Serveurs.get(msg.channel.guild.id).Joueurs.get(msg.author.id)
+                joueur.MelangerMa()
+                joueur.MelangerMi()
                 break
             }
            
@@ -255,6 +296,7 @@ bot.on('message', function (msg)
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
                 message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
+                message = message + Config.Prefix + 'mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage\n'
                 msg.channel.send(message)
                 break
             }
@@ -265,11 +307,16 @@ bot.on('message', function (msg)
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
                 message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
+                message = message + Config.Prefix + 'mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage\n'
                 message = message + Config.Prefix + 'guilds : permet d\'afficher la liste des serveurs sur lesquels se trouve le bot\n'
                 message = message + Config.Prefix + 'users : permet d\'afficher les utilisateurs\n'
                 message = message + Config.Prefix + 'init : permet de réinitialiser le bot\n'
                 message = message + Config.Prefix + 'save : permet de sauvegarder le contexte dans le fichier ./context_'+msg.channel.guild.name+'.JSON\n'
                 message = message + Config.Prefix + 'load : permet de récupéré le contexte depuis le fichier ./context_'+msg.channel.guild.name+'.JSON\n'
+                message = message + Config.Prefix + 'lr : permet de retirer des lames renversées de leurs piches en citant des joueurs, sous la forme : ' + Config.Prefix + 'lr x @joueur1 @joueur2...\n'
+                message = message + '          - x = nombre de cartes à retirer\n'
+                message = message + '          - @joueur = nom de joueur **cité** en utilisant le caractère @\n'
+
                 msg.channel.send(message)
                 break
             }       
@@ -277,7 +324,7 @@ bot.on('message', function (msg)
             default: //Toutes les autres commandes
 
             //Détection d'une commande de jet de dés : débute par le préfixe défini et contient la lettre "d"
-            if (msg.content.startsWith(Config.Prefix) && msg.content.includes('d') ) //format de la commande : --rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
+            if (msg.content.startsWith(Config.Prefix) && msg.content.includes('d') ) //format de la commande : rXdY[fZ] : X = nb dés, Y = nb faces dés, Z = facilité
             {
                 console.log(msg.author + ' lance les dés : ' + msg.content)
                 var commande = msg.content.slice(Config.Prefix.length).trim() //on supprime le préfixe (slice) et on supprime aussi les espaces avant et après (trim)
@@ -347,8 +394,61 @@ bot.on('message', function (msg)
                 msg.channel.send(message)
                 console.log(message)
             }
+
+            //Détection d'une commande pour retirer des lames renversées à un joueur
+            if (msg.content.startsWith(Config.Prefix + 'lr') && msg.mentions.members.size >0) { //format de la commande : lr x @joueur
+                var commande = msg.content.slice(Config.Prefix.length+2).trim()
+                var NbCartes = parseInt(commande.substr(0,commande.indexOf(' ')))
+                var NomsJoueurs = msg.mentions.users.entries()
+                var ExisteJoueur = false
+                var joueur
+                var index = 0 
+
+                if((!commande.startsWith('<')) && isNaN(NbCartes)){
+                    console.log('Problème dans le nombre de cartes à retirer')
+                }else{if(commande.startsWith('<')){ NbCartes=1}}
+
+                var valeur = NomsJoueurs.next()
+                while(!valeur.done) // pour chaque joueur passé en paramètre de la commande
+                {   
+                    Serveurs.get(msg.channel.guild.id).Joueurs.forEach(function(joueur){ // on parse les joueurs du serveurs
+                        if(joueur.Id === valeur.value[0]){ //si le nom correspond
+                            ExisteJoueur = true //on indique que le joueur existe
+                            while ( joueur.LamesRenversees.size > 0 && index<NbCartes){ // on retire une lame renversée de la pile autant de fois qu'on l'a demandé. On s'arrête s'il n'y en a plus.
+                                var it = joueur.LamesRenversees.values()
+                                var first = it.next()
+                                joueur.LamesRenversees.delete(first.value) // on retire la première lame arrivée
+               
+                                if(first.value.includes('renversé')){ // et on la remet dans la bonne défausse
+                                    joueur.DefausseMa.add(first.value)
+                                }
+                                else{
+                                    joueur.DefausseMi.add(first.value)
+                                }
+                                index+=1
+                            }
+                            if(index == 1 ){ //on affiche un message en accordant en nombre de carte retirées
+                                message = index + ' lame renversée a été suprimée de la pile de ' + joueur.Surnom + '. Il lui en reste ' + joueur.LamesRenversees.size + '.'
+                            }
+                            else {
+                                message = index + ' lames renversées ont été suprimées de la pile de ' + joueur.Surnom + '. Il lui en reste ' + joueur.LamesRenversees.size + '.'
+                            }
+                            console.log(message)
+                            msg.channel.send(message)
+                        }
+                    })
+                    if(!ExisteJoueur){console.log('Le joueur ' + valeur.value[1].username + ' n\'existe pas')}
+
+                    valeur = NomsJoueurs.next()
+                }   
+
+                
+        }
+
+    
             break
             
+
         }
     }
 })
