@@ -96,7 +96,7 @@ class Joueur
         var it = this.LamesMa.values()
         var first = it.next()
         this.LamesMa.delete(first.value)
-        if (first.value.includes('renversé')){ // || first.includes('coupes') || first.includes('batons')
+        if (first.value.includes('renversé')){ // || first.includes('deniers') || first.includes('épées')
             this.LamesRenversees.add(first.value)
         }
         else {
