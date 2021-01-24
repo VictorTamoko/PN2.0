@@ -290,14 +290,15 @@ bot.on('message', function (msg)
             
             case Config.Prefix + 'help':    case Config.Prefix + '?' : {//Affichage l'aide aux joueurs
                 console.log(msg.author.username + ' demande de l\'aide')
-                message = Config.Prefix + 'r : permet de faire un jet de dé(s), la commande est sous la forme --r3d10[f7] avec : \n'
+                message = Config.Prefix + ' : permet de faire un jet de dé(s), la commande est sous la forme ' + Config.Prefix + '3d10[f7] avec : \n'
                 message = message + '          - 3 = nombre de dés à lancer\n'
                 message = message + '          - 10 = nombre de face dés dés lancés\n'
                 message = message + '          - 7 = résultat à obtenir pour que le dé soit un succès. cette partie f7 est optionnelle\n'
                 message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
                 message = message + Config.Prefix + 'mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage\n'
-                msg.channel.send(message)
+                message = message + Config.Prefix + 'loc : permet de faire un jet de dé de localisation\n'
+				msg.channel.send(message)
                 break
             }
             case Config.Prefix + 'helpmj':{//Affiche l'aide complète
@@ -308,6 +309,7 @@ bot.on('message', function (msg)
                 message = message + Config.Prefix + 'ma : permet de piocher une lame majeure \n'
                 message = message + Config.Prefix + 'mi : permet de piocher une lame mineure\n'
                 message = message + Config.Prefix + 'mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage\n'
+                message = message + Config.Prefix + 'loc : permet de faire un jet de dé de localisation\n'
                 message = message + Config.Prefix + 'guilds : permet d\'afficher la liste des serveurs sur lesquels se trouve le bot\n'
                 message = message + Config.Prefix + 'users : permet d\'afficher les utilisateurs\n'
                 message = message + Config.Prefix + 'init : permet de réinitialiser le bot\n'
@@ -321,6 +323,23 @@ bot.on('message', function (msg)
                 break
             }       
             
+			case Config.Prefix + 'loc' : {//Permet un jet de localisation
+				resultatDe = Math.round(Math.random() * (6-1))+1 //calcul aléatoire du résultat
+				message = '***' + msg.member.displayName + '*** a touché : ';
+				switch (resultatDe)
+				{
+					case 1:{message = message + 'la Jambe Gauche'; break}
+					case 2:{message = message + 'la Jambe Droite'; break}
+					case 3:{message = message + 'le Torse'; break}
+					case 4:{message = message + 'le Bras Gauche'; break}
+					case 5:{message = message + 'le Bras Droit'; break}
+					case 6:{message = message + 'la Tête'; break}
+				}
+				message = message + ' (' + resultatDe + ')'
+				msg.channel.send(message)
+				break
+			}
+			
             default: //Toutes les autres commandes
 
             //Détection d'une commande de jet de dés : débute par le préfixe défini et contient la lettre "d"
