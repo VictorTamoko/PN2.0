@@ -20,6 +20,7 @@ Les commandes existantes permettent aux joueurs de :
   !3d10f6 : Permet de lancer 3 dés à 10 faces, avec une facilité de 6. Le bot affiche le résultat des dés ainsi que le nombre de succès (les 1 sont comptés comme deux succès)
   !ma : Permet de tirer une lame majeure. Le bot indique le nom de la lame. Lorsque toutes les lames majeures ont été tirées, le bot remélange automatiquement le paquet 
   !mi : Permet de tirer une lame mineure. Le bot indique le nom de la lame. Lorsque toutes les lames mineures ont été tirées, le bot remélange automatiquement le paquet
+  !loc : Permet de faire un jet de dé de localisation
   !mel : permet de mélanger ses cartes dans le but de démarrer un nouveau tirage
   !help : Permet d'afficher les commandes destinées aux joueurs
   !helpmj : Permet d'afficher toutes les commandes du bot
