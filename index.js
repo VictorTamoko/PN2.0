@@ -5,7 +5,7 @@ const fs = require('fs')
 Config = require(__dirname+"/config.json")
 const LamesMajeures = new Set(['le Mat','le Bateleur','la Papesse','l’Impératrice','l’Empereur','le Pape','l’Amoureux','le Chariot','la Justice','l’Hermite','la Roue','la Force','le Pendu','l’Arcane sans Nom','la Tempérance','le Diable','la Maison-Dieu','l’Étoile','la lune','le Soleil','le Jugement','le Monde','le Bateleur renversé','la Papesse renversée','l’Impératrice renversée','l’Empereur renversé','le Pape renversé','l’Amoureux renversé','le Chariot renversé','la Justice renversée','l’Hermite renversé','la Roue renversée','la Force renversée','le Pendu renversé','l’Arcane sans Nom renversée','la Tempérance renversée','le Diable renversé','la Maison-Dieu renversée','l’Étoile renversée','la lune renversée','le Soleil renversé','le Jugement renversé','le Monde renversé'])
 const LamesMineures = new Set(['valet de coupes','cavalier de coupes','reine de coupes','roi de coupes','valet d’épées','cavalier d’épées','reine d’épées','roi d’épées','valet de batons','cavalier de batons','reine de batons','roi de batons','valet de deniers','cavalier de deniers','reine de deniers','roi de deniers'])
-const Serveurs = new Map() // liste des serveurs sur lesquel est le botUne collection de type Map permet d'utiliser la méthode get(clé) pour faire référence à un de ses éléments. Ce qui n'est pas possible dans un Set.
+var Serveurs = new Map() // liste des serveurs sur lesquel est le botUne collection de type Map permet d'utiliser la méthode get(clé) pour faire référence à un de ses éléments. Ce qui n'est pas possible dans un Set.
 var message
 
 //Définition des types
@@ -96,7 +96,7 @@ class Joueur
         var it = this.LamesMa.values()
         var first = it.next()
         this.LamesMa.delete(first.value)
-        if (first.value.includes('renversé')){ // || first.includes('deniers') || first.includes('épées')
+        if (first.value.includes('renversé')){ // || first.includes('coupes') || first.includes('batons')
             this.LamesRenversees.add(first.value)
         }
         else {
@@ -114,7 +114,7 @@ class Joueur
         var it = this.LamesMi.values()
         var first = it.next()
         this.LamesMi.delete(first.value)
-        if(first.value.includes('coupes') || first.value.includes('batons')){
+        if(first.value.includes('deniers') || first.value.includes('épées')){
             this.LamesRenversees.add(first.value)
         }
         else {
@@ -136,20 +136,31 @@ class Serveur{
 //Définition des fonctions
 function Init() //Permet de d'initialiser le bot
 {
+
     Serveurs.clear()
     bot.guilds.cache.each(guild =>{
         NouveauServeur= new Serveur(guild)
-        guild.members.cache.each(guildmember =>{
-            if (!guildmember.user.bot){//Crée un utilisateur par user du salon qui n'est pas un bot
-                NouveauJoueur = new Joueur(guildmember, guildmember.user.username)
-                NouveauJoueur.SetDefausses()
-                NouveauJoueur.MelangerMa() 
-                NouveauJoueur.MelangerMi()
-                NouveauServeur.Joueurs.set(NouveauJoueur.Id,NouveauJoueur)
-            }
-        })
         Serveurs.set(guild.id,NouveauServeur)
+        guild.members.fetch()
+            .then(function(guildMembersList){
+                guildMembersList.each(guildmember =>{
+                    if (!guildmember.user.bot){//Crée un utilisateur par user du salon qui n'est pas un bot
+                        NouveauJoueur = new Joueur(guildmember, guildmember.user.username)
+                        //console.log(NouveauJoueur.Nom + " : " + Serveurs[0].Nom)
+                        NouveauJoueur.SetDefausses()
+                        NouveauJoueur.MelangerMa() 
+                        NouveauJoueur.MelangerMi()
+                        
+                        let serveurmodif = Serveurs.get(guildmember.guild.id)
+                        serveurmodif.Joueurs.set(NouveauJoueur.Id,NouveauJoueur)
+                    }
+                })
+            })
+            .catch(console.error);
     }) 
+    console.log('I am ready!')
+    bot.user.setActivity(Config.Prefix + 'help')
+
 }
 function Sauvegarder(GuildId) //Permet de sauvegarder le contexte
 {
@@ -201,8 +212,6 @@ bot.on('ready', () =>
 {
     //s'exécute lorsque le bot est démarré sur le serveur
     Init()
-    console.log('I am ready!')
-    bot.user.setActivity(Config.Prefix + 'help')
 })
 
 //Détection des commandes dans les messages du serveur
@@ -217,6 +226,7 @@ bot.on('message', function (msg)
             case Config.Prefix + 'ma':{//Demande d'une lame majeure
                 console.log(msg.author.username + ' pioche une lame majeure')
                 var joueur = Serveurs.get(msg.channel.guild.id).Joueurs.get(msg.author.id)
+                console.log(joueur)
                 var lame = joueur.PiocherMa()//On exécute la méthode PiocherMa pour l'utilisateur ayant envoyé le méssage grâce à son id
                 message = '***' + joueur.Surnom +'*** a pioché la lame majeure suivante : **' + lame+'**\n'
                 message = message + '***' + joueur.Surnom +'*** en est à **' + joueur.LamesRenversees.size + '** lames renversées' 
@@ -243,6 +253,9 @@ bot.on('message', function (msg)
                 var joueur = Serveurs.get(msg.channel.guild.id).Joueurs.get(msg.author.id)
                 joueur.MelangerMa()
                 joueur.MelangerMi()
+                message = '***'+ joueur.Surnom + '*** vient de battre ses cartes. \n'
+                message = message + '***' + joueur.Surnom +'*** en est à **' + joueur.LamesRenversees.size + '** lames renversées' 
+                msg.channel.send(message)
                 break
             }
            
