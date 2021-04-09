@@ -47,7 +47,8 @@ La section "OAuth2" permet de générer le lien d'invitation de votre applicatio
     - Permissions : 
         + View Channels
         + Send messages
-L'étape suivante est la création du bot dans votre applicaiton. Pour se faire, se rendre dans la scetion "Bot", cliquer sur le bouton "Add bot" et valider par le bouton "Yes, Do it!". Nous reviendrons plus tard sur cette page pour récupérer le "Token" qui permettra de lier le code exécuté sur la machine et votre bot Discord.
+La section "Bot" permet d'autoriser la récupération de la liste des membres du serveur (utilisé pour gérer les decks de tarot pour chacun des joueurs) : activez donc "SERVER MEMBERS INTENT". 
+L'étape suivante est la création du bot dans votre applicaiton. Pour se faire, se rendre dans la section "Bot", cliquer sur le bouton "Add bot" et valider par le bouton "Yes, Do it!". Nous reviendrons plus tard sur cette page pour récupérer le "Token" qui permettra de lier le code exécuté sur la machine et votre bot Discord.
 
 //Récupérer les sources
 Récupérer le fichier "Bot_PN2.0 v1.0.zip". Ensuite, le placer dans le dossier de votre choix et extraire tout. Ouvrir le dossier "Bot" ainsi créé. 
